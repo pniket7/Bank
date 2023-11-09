@@ -1,4 +1,3 @@
-
 import openai
 import streamlit as st
 from utils import ChatSession
@@ -6,31 +5,35 @@ from utils import ChatSession
 def main():
     st.title('Financial Bank Advisor Chatbot')
 
-    # Initialize the AdvisorGPT.
+    # Load the OpenAI API key from Streamlit secrets
+    openai.api_key = st.secrets["api_key"]
+
+    # Initialize the AdvisorGPT. (Move this outside of the button click handler)
     sessionAdvisor = ChatSession(gpt_name='Advisor')
 
     # Instruct GPT to become a financial advisor.
     sessionAdvisor.inject(
-        line="You are a financial advisor at a bank. Greet the user with this message: 'Hello! How can I assist you with your banking today? What are you trying to accomplish with your banking?' Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. If the user doesn't mention specific goals initially, guide them to discuss their financial goals, including age, annual income, and risk appetite, but do not ask for these details right at the beginning of the conversation. Always prioritize answering the user's questions over gathering information. Do not recommend specific financial actions or portfolios until you have a clear understanding of the user's financial situation and goals. Always maintain a customer-focused approach. Say 'ok' if you understand.",
+        line="You are a financial advisor at a bank. Greet the user with this message: 'Hello! How can I assist you with your banking today? What are you trying to accomplish with your banking?' Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
         role="user"
     )
     sessionAdvisor.inject(line="Ok.", role="assistant")
-
-    # Start the conversation.
-    user_input = ''
-    advisor_response = sessionAdvisor.chat(user_input=user_input, verbose=False)
 
     # Create a Streamlit text input for user input with a unique key
     user_input = st.text_input("User:", key="user_input")
 
     # Create a Streamlit button with a unique key
     if st.button("Send", key="send_button"):
-        advisor_response = sessionAdvisor.chat(user_input=user_input, verbose=False)
-        st.text(f'Advisor: {advisor_response}')
+        # Update the chat session with the user's input
+        sessionAdvisor.chat(user_input=user_input, verbose=False)
+
+        # Get the chat history, which includes the chatbot's response
+        chat_history = sessionAdvisor.messages
+
+        # Extract the chatbot's response from the last message in the history
+        advisor_response = chat_history[-1]['content'] if chat_history else ""
+
+        # Display the chatbot's response with text wrapping
+        st.markdown(f'**Advisor:** {advisor_response}', unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    # Load or set the OpenAI API key
-    openai.api_key = "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"
-
     main()
-
