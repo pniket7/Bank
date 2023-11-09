@@ -33,13 +33,10 @@ def main():
     # Get the chat history, which includes the chatbot's responses
     chat_history = st.session_state.sessionAdvisor.messages
 
-    # Extract the chatbot's responses
-    advisor_responses = [message['content'] for message in chat_history]
-
     # Display the chat messages
-    for i, (message, response) in enumerate(zip(chat_history, advisor_responses)):
-        st.text(f'User: {message["user_input"]}')
-        st.text(f'Advisor: {response}')
+    for i, message in enumerate(chat_history):
+        user_message = message['role'] == 'user'
+        st.text(f'{"User" if user_message else "Advisor"}: {message["content"]}')
         if i < len(chat_history) - 1:
             st.text("------")
 
