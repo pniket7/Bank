@@ -13,7 +13,7 @@ def main():
 
     # Instruct GPT to become a financial advisor.
     sessionAdvisor.inject(
-        line="You are a financial advisor at a bank. Greet the user with this message: 'Hello! How can I assist you with your banking today? What are you trying to accomplish with your banking?' Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
+        line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
         role="user"
     )
     sessionAdvisor.inject(line="Ok.", role="assistant")
