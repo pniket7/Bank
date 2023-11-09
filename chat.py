@@ -59,13 +59,21 @@ def main():
         # Clear the chat history
         st.session_state.messages = []
 
-    # Add the user input and chatbot response to the chat history
-    if user_input:
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        st.session_state.messages.append({"role": "assistant", "content": advisor_response})
-
     # Display the chat history
-    st.chat(st.session_state.messages)
+    for message in st.session_state.messages:
+        if message['role'] == 'user':
+            st.markdown(f'**User:** {message["content"]}', unsafe_allow_html=True)
+        elif message['role'] == 'assistant':
+            st.markdown(f'**Advisor:** {message["content"]}', unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # Scroll to the bottom of the chat history
+        js = "window.scrollTo(0, document.body.scrollHeight);"
+        st.write(f'<script>{js}</script>', unsafe_allow_html=True)
+
+        # Clear the user input
+        user_input = ""
 
 if __name__ == "__main__":
     main()
