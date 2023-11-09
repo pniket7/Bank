@@ -21,29 +21,51 @@ def main():
     # Create a Streamlit text input for user input with a unique key
     user_input = st.text_input("User:", key="user_input")
 
-    # Create a Streamlit button with a unique key to send a message
+    # Create a Streamlit button with a unique key
     if st.button("Send", key="send_button"):
         # Update the chat session with the user's input
         sessionAdvisor.chat(user_input=user_input, verbose=False)
 
-    # Get the chat history, which includes the chatbot's responses
-    chat_history = sessionAdvisor.messages
+        # Get the chat history, which includes the chatbot's response
+        chat_history = sessionAdvisor.messages
 
-    # Display the conversation history, including previous questions and answers
-    for message in chat_history:
-        role = message['role']
-        content = message['content']
-        st.markdown(f'**{role.capitalize()}:** {content}', unsafe_allow_html=True)
+        # Extract the chatbot's response from the last message in the history
+        advisor_response = chat_history[-1]['content'] if chat_history else ""
 
-    # Add a "New Chat" button to start a new conversation
-    if st.button("New Chat"):
-        # Clear the chat history to start a new conversation
-        sessionAdvisor.clear()
+        # Display the chatbot's response with text wrapping
+        st.markdown(f'**Advisor:** {advisor_response}', unsafe_allow_html=True)
 
-    # Add an "Exit Chat" button to exit the current conversation
-    if st.button("Exit Chat"):
-        st.write("You have exited the current conversation.")
-        st.stop()  # This stops the Streamlit app
+    # Create a new chat button with a unique key
+    if st.button("New Chat", key="new_chat_button"):
+        # Clear the chat session
+        sessionAdvisor = ChatSession(gpt_name='Advisor')
+        sessionAdvisor.inject(
+            line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
+            role="user"
+        )
+        sessionAdvisor.inject(line="Ok.", role="assistant")
+
+        # Clear the user input
+        user_input = ""
+
+        # Clear the chat history
+        st.session_state.messages = []
+
+    # Create an exit chat button with a unique key
+    if st.button("Exit Chat", key="exit_chat_button"):
+        # Clear the user input
+        user_input = ""
+
+        # Clear the chat history
+        st.session_state.messages = []
+
+    # Add the user input and chatbot response to the chat history
+    if user_input:
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        st.session_state.messages.append({"role": "assistant", "content": advisor_response})
+
+    # Display the chat history
+    st.chat(st.session_state.messages)
 
 if __name__ == "__main__":
     main()
