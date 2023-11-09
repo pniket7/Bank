@@ -1,15 +1,11 @@
-import openai
-import streamlit as st
-from utils import ChatSession
-
 def main():
     st.title('Financial Bank Advisor Chatbot')
 
     # Load the OpenAI API key from Streamlit secrets
     openai.api_key = st.secrets["api_key"]
 
-    # Create a Streamlit text input for user input with a unique key
-    user_input = st.text_input("User:", key="user_input")
+    # Create a Streamlit text area for user input with a unique key
+    user_input = st.text_area("User:", key="user_input")
 
     # Create a Streamlit button with a unique key to send the user input
     if st.button("Send", key="send_button"):
@@ -45,9 +41,6 @@ def main():
 
         # Clear the user input field by updating the user_input variable
         user_input = ""
-
-        # Use st.text_input with value parameter to clear the input field
-        user_input = st.text_input("User:", key="user_input", value="")
 
     # Create a button to exit the current conversation
     if st.button("Exit Chat", key="exit_chat_button"):
