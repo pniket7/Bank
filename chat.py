@@ -46,11 +46,15 @@ def main():
         # Clear the user input field by updating the user_input variable
         user_input = ""
 
+        # Use st.text_input with value parameter to clear the input field
+        user_input = st.text_input("User:", key="user_input", value="")
+
     # Create a button to exit the current conversation
     if st.button("Exit Chat", key="exit_chat_button"):
         if "sessionAdvisor" in st.session_state:
             # Remove the existing sessionAdvisor from session_state to exit the chat
             del st.session_state.sessionAdvisor
+
         st.text("Chatbot session exited. You can start a new conversation by clicking the 'New Chat' button.")
 
 if __name__ == "__main__":
