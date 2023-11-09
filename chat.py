@@ -26,14 +26,14 @@ def main():
         # Update the chat session with the user's input
         sessionAdvisor.chat(user_input=user_input, verbose=False)
 
-        # Get the chat history, which includes the chatbot's response
-        chat_history = sessionAdvisor.messages
+    # Get the chat history, which includes the chatbot's responses
+    chat_history = sessionAdvisor.messages
 
-        # Extract the chatbot's response from the last message in the history
-        advisor_response = chat_history[-1]['content'] if chat_history else ""
-
-        # Display the chatbot's response with text wrapping
-        st.markdown(f'**Advisor:** {advisor_response}', unsafe_allow_html=True)
+    # Display the conversation history, including previous questions and answers
+    for message in chat_history:
+        role = message['role']
+        content = message['content']
+        st.markdown(f'**{role.capitalize()}:** {content}', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
