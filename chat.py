@@ -36,9 +36,6 @@ def main():
         # Display the chatbot's response with text wrapping
         st.markdown(f'**Advisor:** {advisor_response}', unsafe_allow_html=True)
 
-        # Clear the user input field by updating the user_input variable
-        user_input = ""
-
     # Create a button to start a new conversation
     if st.button("New Chat", key="new_chat_button"):
         if "sessionAdvisor" in st.session_state:
@@ -54,6 +51,7 @@ def main():
         if "sessionAdvisor" in st.session_state:
             # Remove the existing sessionAdvisor from session_state to exit the chat
             del st.session_state.sessionAdvisor
+
 
         st.text("Chatbot session exited. You can start a new conversation by clicking the 'New Chat' button.")
 
