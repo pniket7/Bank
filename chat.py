@@ -21,7 +21,7 @@ def main():
     # Create a Streamlit text input for user input with a unique key
     user_input = st.text_input("User:", key="user_input")
 
-    # Create a Streamlit button with a unique key
+    # Create a Streamlit button with a unique key to send the user input
     if st.button("Send", key="send_button"):
         # Update the chat session with the user's input
         sessionAdvisor.chat(user_input=user_input, verbose=False)
@@ -35,45 +35,17 @@ def main():
         # Display the chatbot's response with text wrapping
         st.markdown(f'**Advisor:** {advisor_response}', unsafe_allow_html=True)
 
-    # Create a new chat button with a unique key
+    # Create a button to start a new conversation
     if st.button("New Chat", key="new_chat_button"):
-        # Clear the chat session
-        sessionAdvisor = ChatSession(gpt_name='Advisor')
-        sessionAdvisor.inject(
-            line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
-            role="user"
-        )
-        sessionAdvisor.inject(line="Ok.", role="assistant")
+        # Reset the chat session to start a new conversation
+        sessionAdvisor.reset()
+        st.text("New conversation started. You can now enter your query.")
 
-        # Clear the user input
-        user_input = ""
-
-        # Clear the chat history
-        st.session_state.messages = []
-
-    # Create an exit chat button with a unique key
+    # Create a button to exit the current conversation
     if st.button("Exit Chat", key="exit_chat_button"):
-        # Clear the user input
-        user_input = ""
-
-        # Clear the chat history
-        st.session_state.messages = []
-
-    # Display the chat history
-    for message in st.session_state.messages:
-        if message['role'] == 'user':
-            st.markdown(f'**User:** {message["content"]}', unsafe_allow_html=True)
-        elif message['role'] == 'assistant':
-            st.markdown(f'**Advisor:** {message["content"]}', unsafe_allow_html=True)
-
-        st.markdown("---")
-
-        # Scroll to the bottom of the chat history
-        js = "window.scrollTo(0, document.body.scrollHeight);"
-        st.write(f'<script>{js}</script>', unsafe_allow_html=True)
-
-        # Clear the user input
-        user_input = ""
+        # Reset the chat session to exit the current conversation
+        sessionAdvisor.reset()
+        st.text("Chatbot session exited. You can start a new conversation.")
 
 if __name__ == "__main__":
     main()
