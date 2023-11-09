@@ -1,3 +1,7 @@
+import openai
+import streamlit as st
+from utils import ChatSession
+
 def main():
     st.title('Financial Bank Advisor Chatbot')
 
@@ -47,6 +51,7 @@ def main():
         if "sessionAdvisor" in st.session_state:
             # Remove the existing sessionAdvisor from session_state to exit the chat
             del st.session_state.sessionAdvisor
+
 
         st.text("Chatbot session exited. You can start a new conversation by clicking the 'New Chat' button.")
 
