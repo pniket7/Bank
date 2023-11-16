@@ -14,12 +14,19 @@ def main():
 
     # Initialize sessionAdvisor if it doesn't exist
     if "sessionAdvisor" not in st.session_state:
+        st.session_state.sessionAdvisor = None
+
+    if st.session_state.sessionAdvisor is None:
         st.session_state.sessionAdvisor = ChatSession(gpt_name='Advisor')
         st.session_state.sessionAdvisor.inject(
             line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
             role="user"
         )
         st.session_state.sessionAdvisor.inject(line="Ok.", role="assistant")
+
+    # Initialize enter_pressed if it doesn't exist
+    if "enter_pressed" not in st.session_state:
+        st.session_state.enter_pressed = False
 
     # Display chat messages from history on app rerun
     chat_container = st.empty()
@@ -35,7 +42,7 @@ def main():
     user_input = st.text_input("Type your message here...")
 
     # Create a button to send the user input
-    if st.button("Send"):
+    if st.button("Send") or (not st.session_state.enter_pressed and user_input):
         # Add the user's message to the chat history
         st.session_state.chat_history.append({"role": "user", "content": user_input})
 
@@ -56,6 +63,13 @@ def main():
             else:
                 chat_messages += f'<p style="background-color: #0084ff; color: white; padding: 10px; border-radius: 10px; float: right; clear: both;">🤖 {message["content"]}</p>'
         chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
+
+        # Set enter_pressed to True
+        st.session_state.enter_pressed = True
+
+    # Set enter_pressed to False when the user releases the Enter key
+    if not user_input:
+        st.session_state.enter_pressed = False
 
     # Create a button to start a new conversation
     if st.button("New Chat"):
@@ -85,5 +99,5 @@ def main():
         chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
         st.markdown("Chatbot session exited. You can start a new conversation by clicking the 'New Chat' button.")
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     main()
