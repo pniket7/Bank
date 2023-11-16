@@ -8,52 +8,82 @@ def main():
     # Load the OpenAI API key from Streamlit secrets
     openai.api_key = st.secrets["api_key"]
 
-    # Create a Streamlit text area for user input with a unique key
-    user_input = st.text_area("User:", key="user_input")
+    # Initialize chat history in session state if it doesn't exist
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
 
-    # Create a Streamlit button with a unique key to send the user input
-    if st.button("Send", key="send_button"):
-        if "sessionAdvisor" not in st.session_state:
-            # Initialize the AdvisorGPT if it doesn't exist in session_state
-            st.session_state.sessionAdvisor = ChatSession(gpt_name='Advisor')
+    # Initialize sessionAdvisor if it doesn't exist
+    if "sessionAdvisor" not in st.session_state:
+        st.session_state.sessionAdvisor = ChatSession(gpt_name='Advisor')
+        st.session_state.sessionAdvisor.inject(
+            line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
+            role="user"
+        )
+        st.session_state.sessionAdvisor.inject(line="Ok.", role="assistant")
 
-            # Instruct GPT to become a financial advisor.
-            st.session_state.sessionAdvisor.inject(
-                line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
-                role="user"
-            )
-            st.session_state.sessionAdvisor.inject(line="Ok.", role="assistant")
+    # Display chat messages from history on app rerun
+    chat_container = st.empty()
+    chat_messages = ""
+    for message in st.session_state.chat_history:
+        if message["role"] == "user":
+            chat_messages += f'<p style="background-color: #9400D3; color: white; padding: 10px; border-radius: 10px; float: left; clear: both;">🧑 {message["content"]}</p>'
+        else:
+            chat_messages += f'<p style="background-color: #0084ff; color: white; padding: 10px; border-radius: 10px; float: right; clear: both;">🤖 {message["content"]}</p>'
+    chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
+
+    # Accept user input
+    user_input = st.text_input("Type your message here...")
+
+    # Create a button to send the user input
+    if st.button("Send"):
+        # Add the user's message to the chat history
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
 
         # Update the chat session with the user's input
         st.session_state.sessionAdvisor.chat(user_input=user_input, verbose=False)
 
-        # Get the chat history, which includes the chatbot's response
-        chat_history = st.session_state.sessionAdvisor.messages
+        # Get the chatbot's response from the last message in the history
+        advisor_response = st.session_state.sessionAdvisor.messages[-1]['content'] if st.session_state.sessionAdvisor.messages else ""
 
-        # Extract the chatbot's response from the last message in the history
-        advisor_response = chat_history[-1]['content'] if chat_history else ""
+        # Add the chatbot's response to the chat history
+        st.session_state.chat_history.append({"role": "bot", "content": advisor_response})
 
-        # Display the chatbot's response with text wrapping
-        st.markdown(f'**Advisor:** {advisor_response}', unsafe_allow_html=True)
+        # Display the latest messages
+        chat_messages = ""
+        for message in st.session_state.chat_history:
+            if message["role"] == "user":
+                chat_messages += f'<p style="background-color: #9400D3; color: white; padding: 10px; border-radius: 10px; float: left; clear: both;">🧑 {message["content"]}</p>'
+            else:
+                chat_messages += f'<p style="background-color: #0084ff; color: white; padding: 10px; border-radius: 10px; float: right; clear: both;">🤖 {message["content"]}</p>'
+        chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
 
     # Create a button to start a new conversation
-    if st.button("New Chat", key="new_chat_button"):
-        if "sessionAdvisor" in st.session_state:
-            # Remove the existing sessionAdvisor from session_state
-            del st.session_state.sessionAdvisor
-        st.text("New conversation started. You can now enter your query.")
+    if st.button("New Chat"):
+        # Clear the chat history to start a new conversation
+        st.session_state.chat_history = []
 
-        # Clear the user input field by updating the user_input variable
-        user_input = ""
+        # Reinitialize sessionAdvisor for a new conversation
+        st.session_state.sessionAdvisor = ChatSession(gpt_name='Advisor')
+        st.session_state.sessionAdvisor.inject(
+            line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
+            role="user"
+        )
+        st.session_state.sessionAdvisor.inject(line="Ok.", role="assistant")
+
+        # Display a message for a new conversation
+        chat_messages = ""
+        chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
+        st.markdown("New conversation started. You can now enter your query.")
 
     # Create a button to exit the current conversation
-    if st.button("Exit Chat", key="exit_chat_button"):
-        if "sessionAdvisor" in st.session_state:
-            # Remove the existing sessionAdvisor from session_state to exit the chat
-            del st.session_state.sessionAdvisor
+    if st.button("Exit Chat"):
+        # Clear the chat history to exit the chat
+        st.session_state.chat_history = []
 
-
-        st.text("Chatbot session exited. You can start a new conversation by clicking the 'New Chat' button.")
+        # Display a message for exiting the chat
+        chat_messages = ""
+        chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
+        st.markdown("Chatbot session exited. You can start a new conversation by clicking the 'New Chat' button.")
 
 if __name__ == "__main__":
     main()
