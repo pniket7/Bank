@@ -2,8 +2,17 @@ import openai
 import streamlit as st
 from utils import ChatSession
 
+def initialize_sessionAdvisor():
+    advisor = ChatSession(gpt_name='Advisor')
+    advisor.inject(
+        line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
+        role="user"
+    )
+    advisor.inject(line="Ok.", role="assistant")
+    return advisor
+
 def main():
-    st.title('Financial Bank Advisor Chatbot')
+    st.title('Financial Advisor Chatbot')
 
     # Load the OpenAI API key from Streamlit secrets
     openai.api_key = st.secrets["api_key"]
@@ -12,40 +21,28 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    # Initialize sessionAdvisor if it doesn't exist
-    if "sessionAdvisor" not in st.session_state:
-        st.session_state.sessionAdvisor = None
-
-    if st.session_state.sessionAdvisor is None:
-        st.session_state.sessionAdvisor = ChatSession(gpt_name='Advisor')
-        st.session_state.sessionAdvisor.inject(
-            line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
-            role="user"
-        )
-        st.session_state.sessionAdvisor.inject(line="Ok.", role="assistant")
-
-    # Initialize enter_pressed if it doesn't exist
-    if "enter_pressed" not in st.session_state:
-        st.session_state.enter_pressed = False
+    # Initialize sessionAdvisor if it doesn't exist or is set to None
+    if "sessionAdvisor" not in st.session_state or st.session_state.sessionAdvisor is None:
+        st.session_state.sessionAdvisor = initialize_sessionAdvisor()
 
     # Display chat messages from history on app rerun
     chat_container = st.empty()
 
     # Display the chat history
     chat_messages = ""
-    for message in st.session_state.chat_history:
-        if message["role"] == "user":
-            chat_messages += f'<div style="text-align: left; margin-bottom: 10px;"><span style="background-color: #9400D3; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
-        else:
-            chat_messages += f'<div style="text-align: right; margin-bottom: 10px;"><span style="background-color: #0084ff; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
-    
+    if st.session_state.chat_history:
+        for message in st.session_state.chat_history:
+            role_color = "#9400D3" if message["role"] == "user" else "#0084ff"
+            alignment = "left" if message["role"] == "user" else "right"
+            chat_messages += f'<div style="text-align: {alignment}; margin-bottom: 10px;"><span style="background-color: {role_color}; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
+
     chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
 
     # Accept user input
     user_input = st.text_input("Type your message here...")
 
     # Create a button to send the user input
-    if st.button("Send") or (not st.session_state.enter_pressed and user_input):
+    if st.button("Send") and user_input:
         # Add the user's message to the chat history
         st.session_state.chat_history.append({"role": "user", "content": user_input})
 
@@ -63,20 +60,13 @@ def main():
 
         # Display the chat history including new messages
         chat_messages = ""
-        for message in st.session_state.chat_history:
-            if message["role"] == "user":
-                chat_messages += f'<div style="text-align: left; margin-bottom: 10px;"><span style="background-color: #9400D3; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
-            else:
-                chat_messages += f'<div style="text-align: right; margin-bottom: 10px;"><span style="background-color: #0084ff; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
-    
+        if st.session_state.chat_history:
+            for message in st.session_state.chat_history:
+                role_color = "#9400D3" if message["role"] == "user" else "#0084ff"
+                alignment = "left" if message["role"] == "user" else "right"
+                chat_messages += f'<div style="text-align: {alignment}; margin-bottom: 10px;"><span style="background-color: {role_color}; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
+        
         chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
-
-        # Set enter_pressed to True
-        st.session_state.enter_pressed = True
-
-    # Set enter_pressed to False when the user releases the Enter key
-    if not user_input:
-        st.session_state.enter_pressed = False
 
     # Create a button to start a new conversation
     if st.button("New Chat"):
@@ -84,12 +74,7 @@ def main():
         st.session_state.chat_history = []
 
         # Reinitialize sessionAdvisor for a new conversation
-        st.session_state.sessionAdvisor = ChatSession(gpt_name='Advisor')
-        st.session_state.sessionAdvisor.inject(
-            line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. ",
-            role="user"
-        )
-        st.session_state.sessionAdvisor.inject(line="Ok.", role="assistant")
+        st.session_state.sessionAdvisor = initialize_sessionAdvisor()
 
         # Clear the chat container for the new conversation
         chat_container.markdown("", unsafe_allow_html=True)
