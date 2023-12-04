@@ -58,7 +58,7 @@ class ChatSession:
         self.__get_reply(completion=completion['completion'], log=True, *args, **kwargs)
         self.history[-1].update({'completion_index': completion_index})
         if verbose:
-            self.__call__(1)
+            self._call_(1)
 
     def display_probas(self, reply_index):
         """ Display probabilities of each word for the given reply by the model. """
@@ -83,7 +83,7 @@ class ChatSession:
             self.messages = self.messages[:-k]
             self.history = self.history[:-k]
         else:
-            self.__init__()
+            self._init_()
 
     def save(self, filename):
         """ Saves the session to a file. """
@@ -135,7 +135,7 @@ class ChatSession:
             assert isinstance(history, dict)
             self.history.append(history)
 
-    def __call__(self, k: Optional[int] = None):
+    def _call_(self, k: Optional[int] = None):
         """ Display the full chat log or the last k messages. """
 
         k = len(self.messages) if k is None else k
@@ -175,12 +175,12 @@ def update_investor_profile(session, investor_profile: dict, questions: list[str
 def initialize_sessionAdvisor():
     advisor = ChatSession(gpt_name='Advisor')
     advisor.inject(
-        line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. Be brief in your responses.",
+        line="You are a financial advisor at a bank. Start the conversation by inquiring about the user's financial goals and whether the user is seeking financial advice for himself or for his client. So ask the user at the start of the conversation whether he is a broker or he himself wants financial advice. If the user mentions a specific financial goal or issue, acknowledge it and offer to help. Be attentive to the user's needs and goals. Be brief in your responses.",
         role="user"
     )
     advisor.inject(line="Ok.", role="assistant")
     return advisor
-
+    
 def main():
     st.title('Financial Advisor Chatbot')
 
@@ -195,18 +195,20 @@ def main():
     if "sessionAdvisor" not in st.session_state or st.session_state.sessionAdvisor is None:
         st.session_state.sessionAdvisor = initialize_sessionAdvisor()
 
-    # Display chat messages from history on app rerun
+    # Function to update chat history display
+    def update_chat_display(messages):
+        chat_messages = ""
+        if messages:
+            for message in messages:
+                role_color = "#0084ff" if message["role"] == "user" else "#9400D3"
+                alignment = "right" if message["role"] == "user" else "left"
+                chat_messages += f'<div style="text-align: {alignment}; margin-bottom: 10px;"><span style="background-color: {role_color}; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
+        return chat_messages
+
+    # Display the chat history and bot thinking message together
     chat_container = st.empty()
-
-    # Display the chat history
-    chat_messages = ""
-    if st.session_state.chat_history:
-        for message in st.session_state.chat_history:
-            role_color = "#0084ff" if message["role"] == "user" else "#9400D3"
-            alignment = "right" if message["role"] == "user" else "left"
-            chat_messages += f'<div style="text-align: {alignment}; margin-bottom: 10px;"><span style="background-color: {role_color}; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
-
-    chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
+    chat_and_thinking_display = update_chat_display(st.session_state.chat_history) + '<div id="thinking"></div>'
+    chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll; position: relative;">{chat_and_thinking_display}</div>', unsafe_allow_html=True)
 
     # Accept user input
     user_input = st.text_input("Type your message here...")
@@ -216,27 +218,23 @@ def main():
         # Add the user's message to the chat history
         st.session_state.chat_history.append({"role": "user", "content": user_input})
 
-        # Update the chat session with the user's input
-        st.session_state.sessionAdvisor.chat(user_input=user_input, verbose=False)
+        # Display "Bot is thinking..." message while bot generates response
+        with st.spinner(text="Bot is thinking..."):
+            # Update the chat session with the user's input
+            st.session_state.sessionAdvisor.chat(user_input=user_input, verbose=False)
 
-        # Get the chatbot's response from the last message in the history
-        advisor_response = st.session_state.sessionAdvisor.messages[-1]['content'] if st.session_state.sessionAdvisor.messages else ""
+            # Get the chatbot's response from the last message in the history
+            advisor_response = st.session_state.sessionAdvisor.messages[-1]['content'] if st.session_state.sessionAdvisor.messages else ""
 
-        # Remove newlines and extra spaces from the response
-        advisor_response = advisor_response.replace('\n', ' ').strip()
+            # Remove newlines and extra spaces from the response
+            advisor_response = advisor_response.replace('\n', ' ').strip()
 
-        # Add the chatbot's response to the chat history
-        st.session_state.chat_history.append({"role": "bot", "content": advisor_response})
+            # Add the bot's response to the chat history
+            st.session_state.chat_history.append({"role": "bot", "content": advisor_response})
 
-        # Display the chat history including new messages
-        chat_messages = ""
-        if st.session_state.chat_history:
-            for message in st.session_state.chat_history:
-                role_color = "#0084ff" if message["role"] == "user" else "#9400D3"
-                alignment = "right" if message["role"] == "user" else "left"
-                chat_messages += f'<div style="text-align: {alignment}; margin-bottom: 10px;"><span style="background-color: {role_color}; color: white; padding: 8px 12px; border-radius: 20px; display: inline-block; max-width: 70%;">{message["content"]}</span></div>'
-        
-        chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll;">{chat_messages}</div>', unsafe_allow_html=True)
+        # Display the updated chat history including new messages
+        chat_and_thinking_display = update_chat_display(st.session_state.chat_history) + '<div id="thinking"></div>'
+        chat_container.markdown(f'<div style="border: 1px solid black; padding: 10px; height: 400px; overflow-y: scroll; position: relative;">{chat_and_thinking_display}</div>', unsafe_allow_html=True)
 
     # Create a button to start a new conversation
     if st.button("New Chat"):
